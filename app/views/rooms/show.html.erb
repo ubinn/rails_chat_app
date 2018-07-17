@@ -1,0 +1,66 @@
+<p>나 : <%= current_user.email %></p>
+<p>방장 : <%= @room.master_id %></p>
+<h3> 현재 이 방에 참여한 사람 </h3>
+<div class="joined_user_list">
+<% @room.users.each do |user| %>
+   <p class="user-<%= user.id %>"><%=user.email %> </p>
+<% end %>
+</div>
+<hr>
+
+<p>
+  <strong>Title:</strong>
+  <%= @room.title %>
+</p>
+
+
+<p>
+  <strong>Max count:</strong>
+  <%= @room.max_count %>
+</p>
+
+<p>
+  <strong>Admissions count:</strong>
+  <p class="admissions_count"><%= @room.admissions_count %></p>
+</p>
+
+
+
+
+
+<%= link_to 'Exit', exit_room_path(@room), method: 'delete', remote: true, data: {confirm: "이 방을 나가시겠습니까?"} %>
+
+<% if @room.master_id.eql?(current_user.email) %>
+<%= link_to 'delete', room_path(@room), method: 'delete', data: {confirm: "이 방을 없애시겠습니까?"} %> | 
+<%= link_to 'Edit', edit_room_path(@room) %> |
+<% end %>
+<%= link_to 'Back', rooms_path %>
+
+<script>
+   $(document).on('ready', function(){
+       
+   function user_exit(data){
+      $(`.user-${data.user_id}`).remove();
+   }
+   function user_join(data){
+      $('.joined_user_list').append(`<p class="user-${data.user_id}">${data.email}</p>`);
+   }
+       
+   var pusher = new Pusher("<%= ENV["Pusher_key"]%>", {
+     cluster: "<%= ENV["Pusher_cluster"] %>",
+     encrypted: true
+   });
+   
+   var channel = pusher.subscribe("room_<%=@room.id%>");
+   
+   channel.bind('exit',function(data){
+    console.log("유저퇴장");
+      user_exit(data);
+   });
+   
+   channel.bind('join',function(data){
+     console.log("유저입장");
+     user_join(data);
+   })
+  });
+</script>

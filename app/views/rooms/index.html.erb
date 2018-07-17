@@ -1,0 +1,83 @@
+<% if user_signed_in? %>
+<%= current_user.email %> / <%= link_to 'log_out', destroy_user_session_path, method: :delete %>
+<% else %>
+<%= link_to 'log_in', new_user_session_path %>
+<% end %>
+
+<hr/>
+
+<h1>Chat Rooms</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>방제</th>
+      <th>인원</th>
+      <th>방장</th>
+
+      <th colspan="3"></th>
+    </tr>
+  </thead>
+
+  <tbody class="room_list">
+    <% @rooms.reverse.each do |room| %>
+      <tr class="check<%=room.id %>">
+        <td><%= room.title %></td>
+        <td><span class="current<%=room.id %>"><%= room.admissions.size %></span> / <%= room.max_count %></td>
+        <td><%= room.master_id %></td>
+        <% unless room.max_count == room.admissions.size %>
+        <td class="show<%=room.id %>"><%= link_to 'Show', room %></td>
+        <% end %>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+
+<%= link_to 'New Room', new_room_path %>
+
+<script>
+
+function room_created(data) {
+    $('.room_list').prepend(`
+      <tr>
+        <td>${data.title}</td>
+        <td><span class="current${data.id}">0</span>/${data.max_count}</td>
+        <td>${data.master_id}</td>
+        <td><a href="/chat_rooms/${data.id}">Show</a></td>
+      </tr>`);
+  }
+  
+  function user_joined(data) {
+    var current = $(`.current${data.room_id}`);
+    current.text(parseInt(current.text())+1);
+  }
+
+  function user_exit(data){
+    var current = $(`.current${data.room_id}`);
+    current.text(parseInt(current.text())-1);
+    console.log(current)
+  }
+  
+
+  var pusher = new Pusher('<%= ENV["Pusher_key"] %>', {
+    cluster: "<%= ENV["Pusher_cluster"] %>",
+    encrypted: true
+  });
+  
+  var channel = pusher.subscribe('room');
+  
+  channel.bind('create', function(data) {
+    console.log("방만들어짐");
+    console.log(data)
+  });
+  channel.bind('join', function(data) {
+    console.log("유저가 들어감");
+  });
+  
+  channel.bind('exit',function(data){
+    user_exit(data)
+  })
+  
+</script>
