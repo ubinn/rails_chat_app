@@ -3,6 +3,8 @@ Rails.application.routes.draw do
   resources :rooms do
     member do 
       delete '/exit' => 'rooms#user_exit_room'
+      post '/ready' => 'rooms#is_user_ready'
+      post '/chat' => 'rooms#chat'
     end
   end
   devise_for :users

@@ -3,7 +3,7 @@
 <h3> 현재 이 방에 참여한 사람 </h3>
 <div class="joined_user_list">
 <% @room.users.each do |user| %>
-   <p class="user-<%= user.id %>"><%=user.email %> </p>
+   <p class="user-<%= user.id %>"> <%=user.email %> <%= user.admissions.where(room_id: @room.id)[0].ready_state %> </p>
 <% end %>
 </div>
 <hr>
@@ -19,22 +19,20 @@
   <%= @room.max_count %>
 </p>
 
-<p>
-  <strong>Admissions count:</strong>
-  <p class="admissions_count"><%= @room.admissions_count %></p>
-</p>
 
 
 
 
-
-<%= link_to 'Exit', exit_room_path(@room), method: 'delete', remote: true, data: {confirm: "이 방을 나가시겠습니까?"} %>
+<%= link_to 'Exit', exit_room_path(@room), method: 'delete', remote: true, data: {confirm: "이 방을 나가시겠습니까?"} %> |
+<%= link_to 'Ready', ready_room_path(@room), method: 'post', remote: true %> |
 
 <% if @room.master_id.eql?(current_user.email) %>
-<%= link_to 'delete', room_path(@room), method: 'delete', data: {confirm: "이 방을 없애시겠습니까?"} %> | 
-<%= link_to 'Edit', edit_room_path(@room) %> |
+<div class="chat_link">
+<!--<%= link_to 'chat_start', chat_room_path(@room), method: 'post', remote: true %> -->
+</div>
 <% end %>
-<%= link_to 'Back', rooms_path %>
+
+<!--<%= link_to 'Back', rooms_path %>-->
 
 <script>
    $(document).on('ready', function(){
@@ -43,8 +41,15 @@
       $(`.user-${data.user_id}`).remove();
    }
    function user_join(data){
-      $('.joined_user_list').append(`<p class="user-${data.user_id}">${data.email}</p>`);
+      $('.joined_user_list').append(`<p class="user-${data.user_id}">${data.email} ${data.ready_state}</p>`);
    }
+   function user_ready(data){
+     $(`.user-${data.user_id}`).remove();
+     $('.joined_user_list').append(`<p class="user-${data.user_id}">${data.email} ${data.ready_state}</p>`);
+   }
+//   function start_chat(data){
+//      $('.chat_link').append(`<%= link_to 'chat_start', chat_room_path(@room), method: 'post' %>`);
+//   }
        
    var pusher = new Pusher("<%= ENV["Pusher_key"]%>", {
      cluster: "<%= ENV["Pusher_cluster"] %>",
@@ -62,5 +67,14 @@
      console.log("유저입장");
      user_join(data);
    })
+   
+   channel.bind('ready',function(data){
+     console.log(data);
+     user_ready(data);
+   })
+   
+//   channel.bind('start',function(data){
+//       start_chat(data);
+//   })
   });
 </script>

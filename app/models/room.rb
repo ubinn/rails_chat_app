@@ -38,14 +38,9 @@ class Room < ApplicationRecord
   end
   
   
-  # def zero_room_delete(user)
-  #   Room.each do |room|
-  #     if room.admissions_count == 0
-  #       room.destroy
-  #     else
-  #       room.master_id.eql?(user.email)
-  #       room.master_id = room.users.sample.email
-  #     end
-  #   end
-  # end
+  def user_ready(user)
+    user_state = Admission.where(user_id: user.id, room_id: self.id)[0]
+    user_state.update(ready_state: true)
+  end
+  
 end

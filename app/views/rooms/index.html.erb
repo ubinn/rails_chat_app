@@ -71,9 +71,11 @@ function room_created(data) {
   channel.bind('create', function(data) {
     console.log("방만들어짐");
     console.log(data)
+    room_created(data)
   });
   channel.bind('join', function(data) {
     console.log("유저가 들어감");
+    user_joined(data)
   });
   
   channel.bind('exit',function(data){

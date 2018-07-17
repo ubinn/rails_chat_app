@@ -1,5 +1,5 @@
 class RoomsController < ApplicationController
-  before_action :set_room, only: [:show, :edit, :update, :destroy, :user_exit_room]
+  before_action :set_room, only: [:show, :edit, :update, :destroy, :user_exit_room, :is_user_ready]
   before_action :authenticate_user!, except: [:index]
   # GET /rooms
   # GET /rooms.json
@@ -72,6 +72,21 @@ class RoomsController < ApplicationController
     @room.user_exit_room(current_user)
     # @room.zero_room_delete(current_user)
   end
+  
+  def is_user_ready
+    if current_user.is_ready?(@room) # 현재 레디상태라면
+      render js: "console.log('이미 레디상태');"
+    else  # 현재 레디상태가 아니라면
+      @room.user_ready(current_user) # 현재유저의 레디상태 바꿔주기
+      render js: "console.log('레디상태로 바뀌었습니다.');"
+      
+      # 현재 레디한 방 외에 모든방의 레디해제
+    end
+  end
+  
+  def chat
+  end
+  
   
   
   private

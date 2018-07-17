@@ -11,5 +11,9 @@ class User < ApplicationRecord
     # 유저가 그 방에 들어있는지 볼라구
     self.rooms.include?(room)
   end
+  
+  def is_ready?(room)
+    self.admissions.where(room_id: room.id).first.ready_state
+  end
 
 end
