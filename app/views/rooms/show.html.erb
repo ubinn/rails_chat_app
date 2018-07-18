@@ -27,7 +27,9 @@
 <%= link_to 'Ready', ready_room_path(@room), method: 'post', remote: true %> |
 <div class="chat_link">
 <% if @room.admissions.where(ready_state: true).size == @room.max_count %>
-            <%= link_to 'chat_start', chat_room_path(@room), method: 'post', remote: true %>
+    <% if @room.master_id.eql?(current_user.email) %>
+            <%= link_to 'chat_start', open_chat_room_path(@room), method: 'post', remote: true %>
+    <% end %>        
 <% end %>
 </div>
 
@@ -35,50 +37,53 @@
 
 <script>
    $(document).on('ready', function(){
+           
+       function user_exit(data){
+          $(`.user-${data.user_id}`).remove();
+       }
+       function user_join(data){
+          $('.joined_user_list').append(`<p class="user-${data.user_id}">${data.email} ${data.ready_state}</p>`);
+       }
+       function user_ready(data){
+           console.log("user_ready func 들어옴")
+         $(`.user-${data.user_id}`).remove();
+         $('.joined_user_list').append(`<p class="user-${data.user_id}">${data.email} ${data.ready_state}</p>`);
+       }
+       function start_chat(data){
+         $('.chat_link').html(`<%= link_to 'chat_start', chat_room_path(@room), method: 'post', remote: true %>`);
+         // location.replace(`/rooms/${data.room_id}/chat`);
+        
+       }
+      
+       var pusher = new Pusher("<%= ENV["Pusher_key"]%>", {
+         cluster: "<%= ENV["Pusher_cluster"] %>",
+         encrypted: true
+       });
        
-   function user_exit(data){
-      $(`.user-${data.user_id}`).remove();
-   }
-   function user_join(data){
-      $('.joined_user_list').append(`<p class="user-${data.user_id}">${data.email} ${data.ready_state}</p>`);
-   }
-   function user_ready(data){
-       console.log("user_ready func 들어옴")
-     $(`.user-${data.user_id}`).remove();
-     $('.joined_user_list').append(`<p class="user-${data.user_id}">${data.email} ${data.ready_state}</p>`);
-   }
-  function start_chat(data){
-     $('.chat_link').html(`<%= link_to 'chat_start', chat_room_path(@room), method: 'post', remote: true %>`);
-    // location.replace(`/rooms/${data.room_id}/chat`);
-    
-  }
-  
-   var pusher = new Pusher("<%= ENV["Pusher_key"]%>", {
-     cluster: "<%= ENV["Pusher_cluster"] %>",
-     encrypted: true
-   });
-   
-   var channel = pusher.subscribe("room_<%=@room.id%>");
-   
-   channel.bind('exit',function(data){
-    console.log("유저퇴장");
-      user_exit(data);
-   });
-   
-   channel.bind('join',function(data){
-     console.log("유저입장");
-     user_join(data);
-   })
-   
-   channel.bind('ready',function(data){
-     console.log("레디발싸");
-     user_ready(data);
-   })
-   
-  channel.bind('start',function(data){
-    console.log("start_chat 찍혔다.");
-    start_chat(data);
-  })
-  
+       var channel = pusher.subscribe("room_<%=@room.id%>");
+       
+       channel.bind('exit',function(data){
+        console.log("유저퇴장");
+          user_exit(data);
+       });
+       
+       channel.bind('join',function(data){
+         console.log("유저입장");
+         user_join(data);
+       })
+       
+       channel.bind('ready',function(data){
+         console.log("레디발싸");
+         user_ready(data);
+       })
+       
+      channel.bind('start',function(data){
+        console.log("start_chat 찍혔다.");
+        start_chat(data);
+      })
+      
+      channel.bind('chat_start', function(data) {
+         location.reload();
+      })
   });
 </script>

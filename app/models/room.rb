@@ -20,10 +20,10 @@ class Room < ApplicationRecord
   
   def user_exit_room(user)
     @thisR = Room.where(id: self.id)[0]
-    if (@thisR.admissions.count < 1)
+    if (@thisR.admissions.count == 1)
       Admission.where(user_id: user.id, room_id: self.id)[0].destroy
       p "방 폭파조건"
-      @thisR.destroy
+      Room.where(id: self.id)[0].destroy
     else #방장여부 판별
       if (@thisR.master_id == user.email)
         p "if 문 들어옴"
@@ -37,7 +37,11 @@ class Room < ApplicationRecord
       Admission.where(user_id: user.id, room_id: self.id)[0].destroy
     end
   end
+
   
+  def chat_started?
+    self.room_state
+  end
   
   def user_ready(user)
     Admission.where(user_id: user.id, room_id: self.id).update(ready_state: true)

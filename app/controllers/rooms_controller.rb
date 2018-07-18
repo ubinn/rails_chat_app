@@ -10,9 +10,14 @@ class RoomsController < ApplicationController
   # GET /rooms/1
   # GET /rooms/1.json
   def show
-    if current_user.joined_room?(@room)
-    else
-      @room.user_admit_room(current_user)
+    @room.user_admit_room(current_user) unless current_user.joined_room?(@room)
+    
+    respond_to do |format|
+      if @room.chat_started?
+        format.html { render 'chat' }
+      else
+        format.html { render 'show' }
+      end
     end
   end
 
@@ -71,6 +76,7 @@ class RoomsController < ApplicationController
     p "컨트롤러까지는 옴"
     @room.user_exit_room(current_user)
     # @room.zero_room_delete(current_user)
+    @room.update(room_state: false)
   end
   
   def is_user_ready
@@ -81,6 +87,7 @@ class RoomsController < ApplicationController
       render js: "console.log('레디상태로 바뀌었습니다.'); location.reload();"
       # 현재 레디한 방 외에 모든방의 레디해제
       current_user.admissions.where.not(room_id: @room.id).destroy_all
+      # if 
     end
     
   end
@@ -91,12 +98,11 @@ class RoomsController < ApplicationController
      @room.chats.create(user_id: current_user.id, message: params[:message])
   end
   
-  # def open_chat
-  #   p "믿을수없어"
-  #   # @room.chats.create(user_id: current_user.id, message: params[:message])
-  #   @room.update(room_state: true)
-  #   redirect_to chat_room_path
-  # end
+  def open_chat
+    @room.update(room_state: true)
+    Pusher.trigger("room_#{@room.id}", 'chat_start', {})
+    render nothing: true
+  end
   
   private
     # Use callbacks to share common setup or constraints between actions.
