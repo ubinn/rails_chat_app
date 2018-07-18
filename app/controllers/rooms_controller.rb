@@ -99,6 +99,7 @@ class RoomsController < ApplicationController
   end
   
   def open_chat
+    p "오픈챗 됬다."
     @room.update(room_state: true)
     Pusher.trigger("room_#{@room.id}", 'chat_start', {})
     render nothing: true
