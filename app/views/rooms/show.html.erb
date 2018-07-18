@@ -2,9 +2,9 @@
 <p>방장 : <%= @room.master_id %></p>
 <h3> 현재 이 방에 참여한 사람 </h3>
 <div class="joined_user_list">
-<% @room.users.each do |user| %>
-   <p class="user-<%= user.id %>"> <%=user.email %> <%= user.admissions.where(room_id: @room.id)[0].ready_state %> </p>
-<% end %>
+    <% @room.users.each do |user| %>
+       <p class="user-<%= user.id %>"> <%=user.email %> <%= user.admissions.where(room_id: @room.id)[0].ready_state %> </p>
+    <% end %>
 </div>
 <hr>
 
@@ -25,14 +25,13 @@
 
 <%= link_to 'Exit', exit_room_path(@room), method: 'delete', remote: true, data: {confirm: "이 방을 나가시겠습니까?"} %> |
 <%= link_to 'Ready', ready_room_path(@room), method: 'post', remote: true %> |
-
-<% if @room.master_id.eql?(current_user.email) %>
 <div class="chat_link">
-<!--<%= link_to 'chat_start', chat_room_path(@room), method: 'post', remote: true %> -->
-</div>
+<% if @room.admissions.where(ready_state: true).size == @room.max_count %>
+            <%= link_to 'chat_start', chat_room_path(@room), method: 'post', remote: true %>
 <% end %>
+</div>
 
-<!--<%= link_to 'Back', rooms_path %>-->
+<%#= link_to 'Back', rooms_path %>
 
 <script>
    $(document).on('ready', function(){
@@ -44,13 +43,16 @@
       $('.joined_user_list').append(`<p class="user-${data.user_id}">${data.email} ${data.ready_state}</p>`);
    }
    function user_ready(data){
+       console.log("user_ready func 들어옴")
      $(`.user-${data.user_id}`).remove();
      $('.joined_user_list').append(`<p class="user-${data.user_id}">${data.email} ${data.ready_state}</p>`);
    }
-//   function start_chat(data){
-//      $('.chat_link').append(`<%= link_to 'chat_start', chat_room_path(@room), method: 'post' %>`);
-//   }
-       
+  function start_chat(data){
+     $('.chat_link').html(`<%= link_to 'chat_start', chat_room_path(@room), method: 'post', remote: true %>`);
+    // location.replace(`/rooms/${data.room_id}/chat`);
+    
+  }
+  
    var pusher = new Pusher("<%= ENV["Pusher_key"]%>", {
      cluster: "<%= ENV["Pusher_cluster"] %>",
      encrypted: true
@@ -69,12 +71,14 @@
    })
    
    channel.bind('ready',function(data){
-     console.log(data);
+     console.log("레디발싸");
      user_ready(data);
    })
    
-//   channel.bind('start',function(data){
-//       start_chat(data);
-//   })
+  channel.bind('start',function(data){
+    console.log("start_chat 찍혔다.");
+    start_chat(data);
+  })
+  
   });
 </script>

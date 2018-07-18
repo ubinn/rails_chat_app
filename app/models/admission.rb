@@ -16,13 +16,20 @@ class Admission < ApplicationRecord
   end
   
   def user_exit_room_notification
-    # Pusher.trigger("room",'exit',self.as_json)
+    Pusher.trigger("room",'exit',self.as_json)
     Pusher.trigger("room_#{self.room_id}",'exit',self.as_json)
   end
   
   def user_ready_check
-    max_count = self.room.max_count
-    ready_count = self.room.admissions.where(ready_state: true).size
+    p "ready check"
+    # p max_count = self.room.max_count
+    # p max_count = Room.where(id: self.room_id)[0].max_count
+    max_count = Room.where(id: self.room_id)[0].max_count
+    
+    # ready_count = self.room.admissions.where(ready_state: true).size
+    ready_count = Admission.where(room_id: self.room_id, ready_state: true).size
+    
+    
     Pusher.trigger("room_#{self.room_id}",'ready',self.as_json.merge({email: self.user.email, ready_count: ready_count, max_count: max_count}))
     if max_count == ready_count
       p "max_count == ready_count 코드  실행되고있당. "

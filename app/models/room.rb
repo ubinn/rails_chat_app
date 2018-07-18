@@ -4,6 +4,7 @@ class Room < ApplicationRecord
     has_many :chats
 
   after_commit :create_room_notification, on: :create
+  # after_commit :update_room_for_chatting, on: :update
   
   def create_room_notification
     #방만들었을때 index에서 방리스트에 append해주는 트리거
@@ -19,7 +20,7 @@ class Room < ApplicationRecord
   
   def user_exit_room(user)
     @thisR = Room.where(id: self.id)[0]
-    if (@thisR.admissions.count <= 1)
+    if (@thisR.admissions.count < 1)
       Admission.where(user_id: user.id, room_id: self.id)[0].destroy
       p "방 폭파조건"
       @thisR.destroy
@@ -29,18 +30,28 @@ class Room < ApplicationRecord
         p @someone = User.find(@thisR.admissions.sample.user_id).email
         @thisR.update(master_id: @someone)
         
-        Admission.where(user_id: user.id, room_id: self.id)[0].destroy
       end
       p @thisR.admissions.count
       p "방 사람들 수"
       p @thisR.master_id
+      Admission.where(user_id: user.id, room_id: self.id)[0].destroy
     end
   end
   
   
   def user_ready(user)
-    user_state = Admission.where(user_id: user.id, room_id: self.id)[0]
-    user_state.update(ready_state: true)
+    Admission.where(user_id: user.id, room_id: self.id).update(ready_state: true)
   end
+  
+  # def update_room_for_chatting
+  #   p "와우"
+  #   p user_id_array = self.admissions
+  #   @b = []
+  #   user_id_array.each do |user|
+  #     @a = User.find(user.user_id).email
+  #     @b.append(@a)
+  #   end
+  #   Pusher.trigger("room_#{self.id}","go_to_chat", self.as_json.merge({email: @b}))
+  # end
   
 end

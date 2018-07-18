@@ -37,8 +37,9 @@ ActiveRecord::Schema.define(version: 20180716110814) do
     t.string   "master_id"
     t.integer  "max_count"
     t.integer  "admissions_count", default: 0
-    t.datetime "created_at",                   null: false
-    t.datetime "updated_at",                   null: false
+    t.boolean  "room_state",       default: false, null: false
+    t.datetime "created_at",                       null: false
+    t.datetime "updated_at",                       null: false
   end
 
   create_table "users", force: :cascade do |t|

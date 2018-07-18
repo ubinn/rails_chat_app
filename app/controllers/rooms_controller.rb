@@ -1,5 +1,5 @@
 class RoomsController < ApplicationController
-  before_action :set_room, only: [:show, :edit, :update, :destroy, :user_exit_room, :is_user_ready]
+  before_action :set_room, only: [:show, :edit, :update, :destroy, :user_exit_room, :is_user_ready, :chat, :open_chat]
   before_action :authenticate_user!, except: [:index]
   # GET /rooms
   # GET /rooms.json
@@ -68,26 +68,35 @@ class RoomsController < ApplicationController
   end
   
   def user_exit_room
-    # p "컨트롤러까지는 옴"
+    p "컨트롤러까지는 옴"
     @room.user_exit_room(current_user)
     # @room.zero_room_delete(current_user)
   end
   
   def is_user_ready
     if current_user.is_ready?(@room) # 현재 레디상태라면
-      render js: "console.log('이미 레디상태');"
+      render js: "console.log('이미 레디상태'); location.reload();"
     else  # 현재 레디상태가 아니라면
       @room.user_ready(current_user) # 현재유저의 레디상태 바꿔주기
-      render js: "console.log('레디상태로 바뀌었습니다.');"
-      
+      render js: "console.log('레디상태로 바뀌었습니다.'); location.reload();"
       # 현재 레디한 방 외에 모든방의 레디해제
+      current_user.admissions.where.not(room_id: @room.id).destroy_all
     end
+    
   end
   
   def chat
+    @room_id = @room.id
+    p "으쌰"
+     @room.chats.create(user_id: current_user.id, message: params[:message])
   end
   
-  
+  # def open_chat
+  #   p "믿을수없어"
+  #   # @room.chats.create(user_id: current_user.id, message: params[:message])
+  #   @room.update(room_state: true)
+  #   redirect_to chat_room_path
+  # end
   
   private
     # Use callbacks to share common setup or constraints between actions.
