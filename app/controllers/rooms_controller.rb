@@ -38,7 +38,7 @@ class RoomsController < ApplicationController
     
     respond_to do |format|
       if @room.save
-        @room.user_admit_room(current_user)
+        @room.user_admit_room(current_user) #room.rb
         format.html { redirect_to @room, notice: 'Room was successfully created.' }
         format.json { render :show, status: :created, location: @room }
       else
